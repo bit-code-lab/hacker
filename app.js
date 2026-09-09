@@ -146,6 +146,56 @@ lessons.push(...[
     "source": "https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html"
   }
 ]);
+lessons.push(...[
+  {
+    "title": "JWT 검증 정책과 신뢰할 키 선택",
+    "tag": "심화 · 인증 설계",
+    "summary": "서명 검증과 클레임 검증을 분리하고 알고리즘·발급자·수신자·키 회전 정책을 정의합니다.",
+    "lead": "선수 지식: 인증·인가, 세션, HTTP. 산출물: 자체 테스트 API의 JWT 허용 정책과 거부 테스트 목록.",
+    "body": "<h3>시나리오: 서명은 맞지만 다른 API용 토큰</h3><p>같은 발급자가 여러 API에 토큰을 발급하는 환경을 가정합니다. 서명 검증만 수행하면 다른 수신자용 토큰을 잘못 허용할 수 있습니다. 디코딩은 데이터를 읽는 과정이고, 검증은 그 데이터를 신뢰할 수 있는지 판단하는 과정입니다.</p><h3>서버가 정해야 할 검증 계약</h3><ul><li><strong>알고리즘:</strong> 서버 설정의 허용 목록을 사용합니다. 토큰의 alg 값이 검증 방식을 자유롭게 결정하게 두지 않습니다.</li><li><strong>키:</strong> 신뢰하는 발급자의 고정된 키 출처를 사용합니다. kid는 그 키 집합 내부의 선택자이며 임의 파일 경로나 URL이 아닙니다.</li><li><strong>클레임:</strong> 해당 토큰 프로파일에서 요구하는 iss·aud·exp·nbf와 필요한 필드의 존재·형식을 검사합니다. 허용할 시간 오차도 명시합니다.</li><li><strong>용도:</strong> ID 토큰과 API 액세스 토큰 등 서로 다른 용도의 검증 규칙을 분리합니다.</li></ul><h3>검증 흐름 — 서버 의사 코드</h3><pre><code>신뢰 설정에서 발급자·알고리즘·키 출처 선택\n→ 검증 라이브러리로 서명과 필수 클레임 검사\n→ 해당 API용 토큰인지 검사\n→ 검증된 사용자에 대해 자원별 권한 검사\n실패 또는 알 수 없는 키 → 요청 거부</code></pre><p>이 흐름은 칼리 터미널에 실행할 명령이 아닙니다. 암호 검증을 직접 작성하지 말고 사용하는 인증 공급자와 라이브러리의 공식 검증 기능을 적용합니다.</p><h3>칼리에서 만드는 테스트 계획</h3><p>본인 소유의 개발용 발급자와 API에서만 테스트 토큰을 준비합니다. 정상·만료·다른 aud·다른 iss·서명 변조·필수 클레임 누락·알 수 없는 kid를 각각 분리해 검증합니다. 실제 운영 토큰을 온라인 디코더나 셸 기록에 넣지 마세요.</p><p>칼리 Firefox의 네트워크 도구에서 API 응답을 관찰하고, 서버 로그에는 검증 실패 이유 코드만 기록합니다. 정상 토큰은 허용되고 나머지는 상태 변경 없이 거부되어야 합니다. 이 사이트의 Firebase 검증 설정을 이 일반 예제에 맞춰 임의 변경하지 않습니다.</p><h3>키 회전과 장애 대응</h3><p>새 키 배포와 기존 토큰 만료의 겹침 기간을 설계합니다. 키 갱신 실패 때 서명 검증을 생략하지 않으며, 알 수 없는 kid가 무제한 외부 조회를 유발하지 않도록 캐시와 갱신 빈도를 제한합니다.</p><div class=\"callout\"><strong>리뷰 질문</strong><p>서명만 유효한 다른 서비스용 토큰이 왜 거부되는지 설명할 수 있나요? 키 출처와 허용 알고리즘은 누가 통제하나요? 인증을 통과한 뒤 자원 권한은 어디서 검사하나요?</p></div>",
+    "question": "서명이 유효하지만 aud가 다른 API를 가리키는 토큰은?",
+    "options": [
+      "서명이 맞으므로 허용한다",
+      "서버의 수신자 정책에 맞지 않으므로 거부한다",
+      "클라이언트가 관리자라고 표시하면 허용한다"
+    ],
+    "answer": 1,
+    "explanation": "서명 유효성만으로 토큰의 사용 목적이 맞는 것은 아닙니다. API가 기대하는 수신자 등 검증 계약도 충족해야 합니다.",
+    "source": "https://www.rfc-editor.org/rfc/rfc8725.html"
+  },
+  {
+    "title": "경쟁 조건과 원자적 상태 변경",
+    "tag": "심화 · 데이터 무결성",
+    "summary": "검사와 변경 사이의 경쟁 조건을 분석하고 두 동시 요청으로 불변식을 검증합니다.",
+    "lead": "선수 지식: SQL, 거래 승인, Python. 산출물: 동시 요청에서도 잔액이 음수가 되지 않는 로컬 검증.",
+    "body": "<h3>시나리오와 불변식</h3><p>학습용 포인트가 100이고 요청 두 개가 각각 80을 차감하려고 합니다. 보존해야 할 조건은 잔액이 음수가 되지 않고, 성공은 한 번만 기록되는 것입니다. 조회 후 애플리케이션에서 검사하고 나중에 변경하면 두 요청이 같은 과거 상태를 보고 승인될 수 있습니다.</p><pre><code>요청 A: 잔액 100 조회 → 80 차감 가능 판단\n요청 B: 잔액 100 조회 → 80 차감 가능 판단\n검사 결과가 오래된 상태가 되면 이중 승인 또는 갱신 손실 가능</code></pre><h3>칼리의 Python·SQLite 실습</h3><p>아래는 방어 방식의 검증입니다. 임시 폴더의 합성 포인트 DB만 사용하며 종료하면 정리합니다. 두 스레드가 별도 연결에서 조건부 UPDATE를 실행합니다. 실제 결제나 외부 서버 요청은 없습니다.</p><pre><code>python3 - &lt;&lt;&#x27;PY&#x27;\nimport sqlite3\nimport tempfile\nfrom pathlib import Path\nfrom concurrent.futures import ThreadPoolExecutor\nfrom threading import Barrier\n\nwith tempfile.TemporaryDirectory(prefix=&quot;hacker-race-&quot;) as folder:\n    path = str(Path(folder) / &quot;lab.sqlite3&quot;)\n    db = sqlite3.connect(path)\n    db.execute(&quot;CREATE TABLE wallet (id INTEGER PRIMARY KEY, balance INTEGER CHECK(balance &gt;= 0))&quot;)\n    db.execute(&quot;INSERT INTO wallet VALUES (1, 100)&quot;)\n    db.commit()\n    db.close()\n    ready = Barrier(2)\n\n    def debit(_):\n        connection = sqlite3.connect(path, timeout=5)\n        try:\n            ready.wait(timeout=5)\n            with connection:\n                changed = connection.execute(\n                    &quot;UPDATE wallet SET balance = balance - ? &quot;\n                    &quot;WHERE id = ? AND balance &gt;= ?&quot;, (80, 1, 80)\n                ).rowcount\n            return &quot;OK&quot; if changed == 1 else &quot;DENIED&quot;\n        finally:\n            connection.close()\n\n    with ThreadPoolExecutor(max_workers=2) as pool:\n        results = sorted(pool.map(debit, range(2)))\n    db = sqlite3.connect(path)\n    balance = db.execute(&quot;SELECT balance FROM wallet WHERE id=1&quot;).fetchone()[0]\n    db.close()\n    assert results == [&quot;DENIED&quot;, &quot;OK&quot;] and balance == 20\n    print(results, balance)\nPY</code></pre><p>예상 출력은 ['DENIED', 'OK'] 20입니다. 조건 확인과 차감을 한 SQL 문장으로 결합하고 변경된 행 수로 성공 여부를 판단합니다. CHECK 제약도 음수 저장을 방지하는 추가 장치입니다.</p><h3>왜 동작하며 어디까지 검증했나</h3><p>SQLite는 동시에 하나의 쓰기 트랜잭션만 허용합니다. 뒤의 요청은 앞선 변경 뒤의 조건을 평가하므로 잔액 20에서는 차감하지 못합니다. 데이터베이스별 격리 수준과 잠금 방식이 다르므로 이 결과를 다른 DB에 그대로 일반화하면 안 됩니다.</p><h3>실무에서 추가할 조건</h3><ul><li>재시도된 같은 요청은 멱등성 키와 고유 제약으로 중복 처리 여부를 판정합니다. 같은 키에 다른 요청 내용이 오면 정책에 따라 거부합니다.</li><li>여러 행을 바꾸는 작업은 하나의 트랜잭션으로 묶고, 외부 알림 같은 효과는 트랜잭션 재시도로 중복되지 않게 설계합니다.</li><li>잠금 대기·충돌·네트워크 단절 후 재시도도 검사합니다. DB 변경 전에 성공 응답이나 외부 효과를 먼저 확정하지 않습니다.</li></ul><div class=\"callout\"><strong>변형 과제</strong><p>초기 포인트 160이면 두 요청 모두 성공하고 잔액 0이어야 합니다. 79이면 모두 거부되어야 합니다. 이 예제는 중복 요청 판정이나 다중 서버·외부 결제의 원자성까지 구현한 것은 아닙니다.</p></div>",
+    "question": "두 요청이 동시에 잔액을 차감할 때 이 예시의 핵심 방어는?",
+    "options": [
+      "클라이언트 버튼을 한 번만 누르게 한다",
+      "조회와 차감을 별개 요청으로 나눈다",
+      "조건 확인과 차감을 원자적 SQL 변경으로 결합한다"
+    ],
+    "answer": 2,
+    "explanation": "UI 중복 클릭 방지만으로 동시 요청을 막을 수 없습니다. 데이터가 바뀌는 경계에서 조건을 강제하고 결과를 확인해야 합니다.",
+    "source": "https://sqlite.org/lang_transaction.html"
+  },
+  {
+    "title": "공급망 보안과 배포 산출물 검증",
+    "tag": "심화 · 개발 보안",
+    "summary": "해시·서명·빌드 출처·의존성 목록이 증명하는 범위를 구분하고 배포 검증 정책을 만듭니다.",
+    "lead": "선수 지식: 해시의 개념, Git과 의존성 관리. 산출물: 배포 전 증거 목록과 실패 시 배포 중단 기준.",
+    "body": "<h3>시나리오: 파일과 체크섬이 함께 바뀐다면</h3><p>다운로드한 파일과 같은 신뢰되지 않은 위치의 체크섬이 일치해도 공식 제작자가 만든 파일임을 증명하지는 않습니다. 검증 값 자체를 어디서 신뢰할 것인지가 중요합니다.</p><h3>증거의 범위를 구분하기</h3><ul><li><strong>해시:</strong> 신뢰하는 기준 바이트와 내용이 같은지 확인합니다.</li><li><strong>서명:</strong> 신뢰 정책에 맞는 키나 신원에 연결되는지 확인합니다. 서명됐다는 사실만으로 코드가 안전한 것은 아닙니다.</li><li><strong>빌드 출처:</strong> 산출물 digest, 소스 저장소·리비전, 빌더 신원이 기대한 값과 연결되는지 확인합니다.</li><li><strong>SBOM:</strong> 포함된 구성 요소를 추적하는 자료입니다. 무결성이나 취약점 부재를 단독으로 증명하지 않습니다.</li></ul><h3>칼리 Python으로 무결성 비교</h3><p>외부 파일 없이 합성 바이트로 비교합니다. 아래 expected는 로컬 기준값일 뿐, 제작자의 신원을 보증하는 값은 아닙니다.</p><pre><code>python3 - &lt;&lt;&#x27;PY&#x27;\nimport hashlib\n\n# Synthetic bytes: the local digest is a baseline, not proof of a publisher.\noriginal = b&quot;release 1\\n&quot;\nmodified = b&quot;release 2\\n&quot;\nexpected = hashlib.sha256(original).hexdigest()\nfor label, data in [(&quot;original&quot;, original), (&quot;modified&quot;, modified)]:\n    matches = hashlib.sha256(data).hexdigest() == expected\n    print(label, &quot;MATCH&quot; if matches else &quot;MISMATCH&quot;)\nPY</code></pre><p>original MATCH, modified MISMATCH가 출력됩니다. 실제 파일의 해시는 칼리 터미널에서 sha256sum으로 확인할 수 있지만, 비교할 기준값은 신뢰 경로에서 받아야 합니다.</p><h3>배포 검증 정책 예시</h3><pre><code>저장소와 소스 리비전이 승인 목록에 포함됨\nAND 산출물 digest가 검증된 출처 자료와 일치함\nAND 서명자 / 빌더 신원이 기대한 정책과 일치함\nAND 의존성 변경과 빌드 설정이 검토됨\n→ 배포 허용; 필수 증거 누락 또는 불일치 → 배포 중단</code></pre><h3>실무 점검 절차</h3><ol><li>정상 산출물로 먼저 검증하고 사용한 정책 버전을 기록합니다.</li><li>파일 한 바이트 변경, 다른 저장소의 서명, 다른 리비전, 출처 자료 누락을 각각 거부하는지 검사합니다.</li><li>의존성 잠금 파일을 사용하고 변경 내역을 검토합니다. 버전 고정만으로 패키지 내용의 안전성이 보장되지는 않습니다.</li><li>빌드 작업의 토큰 권한과 비밀 접근 범위를 최소화하고 신뢰하지 않는 변경이 배포 자격 증명에 접근하지 못하게 분리합니다.</li><li>검증한 바로 그 바이트를 배포하고 롤백 대상도 같은 정책으로 검증합니다.</li></ol><div class=\"callout\"><strong>결과 해석</strong><p>수업의 해시 비교 성공은 공급망 검증 완료가 아닙니다. 실제 서명·출처 검증은 선택한 빌드 플랫폼과 서명 도구의 공식 검증 절차로 수행해야 합니다.</p></div><p><a href=\"https://slsa.dev/spec/v1.1/verifying-artifacts\">SLSA 산출물 검증 명세 ↗</a></p>",
+    "question": "같은 미확인 다운로드 위치에서 받은 파일과 해시가 일치하면?",
+    "options": [
+      "내용 비교는 가능하지만 제작자 신뢰성까지 증명하지는 않는다",
+      "공식 제작자가 만든 것이 확정된다",
+      "의존성 취약점이 없다는 뜻이다"
+    ],
+    "answer": 0,
+    "explanation": "공격자가 파일과 기준 해시를 함께 바꿀 수 있습니다. 신뢰할 기준과 서명·출처 정책을 별도로 확인해야 합니다.",
+    "source": "https://cheatsheetseries.owasp.org/cheatsheets/Software_Supply_Chain_Security_Cheat_Sheet.html"
+  }
+]);
 const levelNames = ['입문', '초급', '중급', '고급'];
 lessons.forEach((lesson, i) => { lesson.level = i < 8 ? Math.floor(i / 2) : 3; });
 const courses = document.querySelector('#courses');
