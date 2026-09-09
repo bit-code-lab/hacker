@@ -56,19 +56,33 @@ const lessons = [
   }
 ];
 
+lessons.push(
+  { title: '위협 모델과 신뢰 경계', tag: '보안 설계', summary: '데이터 흐름에서 신뢰 경계를 찾고, 위협과 검증 계획을 연결합니다.',
+    lead: '보안 검토는 기능을 모두 만든 뒤에만 하는 일이 아닙니다. 설계 단계에서 데이터와 권한이 이동하는 경로를 먼저 살펴봅니다.',
+    body: '<h3>시스템을 작은 흐름으로 나누기</h3><p>과제 제출 서비스에서 브라우저 → API → 데이터베이스의 흐름을 그려보세요. 브라우저 입력은 신뢰할 수 없는 데이터입니다. API가 사용자를 검증하더라도 과제 소유권을 확인해야 하며, 데이터베이스 계정 권한도 제한해야 합니다.</p><h3>자산·위협·대응·검증 연결하기</h3><ul><li><strong>자산:</strong> 비공개 과제와 제출 이력.</li><li><strong>위협:</strong> 다른 사용자가 과제 번호를 바꿔 수정 요청을 보냄.</li><li><strong>대응:</strong> 서버에서 요청자와 자원 소유권을 검사하고 기본 거부 적용.</li><li><strong>검증:</strong> 다른 계정과 비로그인 요청을 시험하고 실제 저장 내용 확인.</li></ul><div class="callout"><strong>설계가 바뀌면 다시 검토하기</strong><p>외부 파일 저장소나 공유 링크를 추가하면 데이터 흐름과 신뢰 경계도 바뀝니다. 위협 모델은 한 번 작성하고 끝내는 문서가 아닙니다.</p></div><h3>직접 해보기</h3><p>자신이 만든 작은 앱의 외부 입력, 처리 기능, 저장소를 그려보세요. 각 경계에 검증 책임을 적고, 가장 영향이 큰 실패 하나에 대한 테스트를 작성하세요.</p>',
+    question: '외부 파일 공유 기능을 추가했을 때 필요한 보안 활동은?', options: ['기존 위협 모델을 그대로 둔다', '변경된 데이터 흐름·권한 경계와 위협 모델을 다시 검토한다', '파일 이름만 길게 만든다'], answer: 1,
+    explanation: '기능 변경으로 새 신뢰 경계가 생길 수 있으므로 위협과 대응·검증 계획을 함께 갱신합니다.', source: 'https://cheatsheetseries.owasp.org/cheatsheets/Threat_Modeling_Cheat_Sheet.html' },
+  { title: '거래 승인과 상태 검증', tag: '심화 설계', summary: '승인을 구체적인 작업과 연결하고, 변경·재사용에 안전한 흐름을 설계합니다.',
+    lead: '중요한 작업의 승인은 단순한 “로그인 완료” 표시보다 더 구체적이어야 합니다.',
+    body: '<h3>승인을 작업 데이터에 연결하기</h3><p>금액과 수취인을 확인한 승인이라면, 그 승인은 해당 금액과 수취인의 거래에만 적용되어야 합니다. 승인 후 데이터가 변경되면 기존 승인을 무효화하고 새 거래에 대한 검증을 요구합니다.</p><h3>순서를 서버가 관리하기</h3><p>요청된 거래 생성 → 상세 정보 확인 → 승인 검증 → 실행의 순서를 서버에서 강제합니다. 클라이언트가 보낸 approved=true 같은 값을 권한 근거로 사용하지 않습니다. 실행 직전에도 승인 대상 데이터와 현재 거래가 일치하는지 확인합니다.</p><div class="callout"><strong>재사용과 중복 실행</strong><p>승인 정보의 유효 시간을 제한하고 거래마다 고유하게 결합하세요. 실행된 승인이 다른 작업에 재사용되지 않도록 서버 상태를 관리합니다.</p></div><h3>검증 시나리오</h3><ul><li>승인 후 대상 데이터가 변경되면 실행을 거부하는가?</li><li>만료되거나 이미 사용된 승인을 거부하는가?</li><li>승인 단계를 건너뛰는 직접 요청을 거부하는가?</li><li>정상적인 승인 흐름은 계속 작동하는가?</li></ul><p>실제 결제 연동이 아닌 본인 소유의 모의 거래 환경에서 테스트하세요.</p>',
+    question: '승인 후 거래 금액이 변경됐다면?', options: ['새 거래 내용에 대한 승인을 다시 검증한다', '기존 승인을 재사용한다', '클라이언트의 승인 표시만 확인한다'], answer: 0,
+    explanation: '승인은 확인한 거래 데이터와 연결되어야 하며, 변경된 데이터에는 기존 승인을 적용하지 않습니다.', source: 'https://cheatsheetseries.owasp.org/cheatsheets/Transaction_Authorization_Cheat_Sheet.html' }
+);
+const levelNames = ['입문', '초급', '중급', '고급'];
+lessons.forEach((lesson, i) => { lesson.level = Math.floor(i / 2); });
 const courses = document.querySelector('#courses');
 lessons.forEach((lesson, index) => {
   const card = document.createElement('a');
   card.className = 'course';
   card.href = `#lesson-${index}`;
-  card.innerHTML = `<div class="course-top"><span class="course-number">CHAPTER ${String(index + 1).padStart(2, '0')}</span><span class="tag">${lesson.tag}</span></div><h3>${lesson.title}</h3><p>${lesson.summary}</p><div class="course-bottom"><span>개념 학습 · 확인 문제 1개</span><b aria-hidden="true">↗</b></div>`;
+  card.innerHTML = `<div class="course-top"><span class="course-number">CHAPTER ${String(index + 1).padStart(2, '0')}</span><span class="tag">${levelNames[lesson.level]} · ${lesson.tag}</span></div><h3>${lesson.title}</h3><p>${lesson.summary}</p><div class="course-bottom"><span>개념 학습 · 확인 문제 1개</span><b aria-hidden="true">↗</b></div>`;
   courses.append(card);
 });
 
 // Lesson HTML is fixed author-written content; user-controlled text is never parsed as HTML.
 const responses = new Map();
 function openLesson() {
-  const match = /^#lesson-([0-5])$/.exec(location.hash);
+  const match = /^#lesson-([0-7])$/.exec(location.hash);
   if (!match) return;
   const index = Number(match[1]);
   const lesson = lessons[index];
@@ -114,3 +128,22 @@ function openLesson() {
 }
 window.addEventListener('hashchange', openLesson);
 openLesson();
+
+function filterCourses(level) {
+  const descriptions = ['보안 목표와 HTTP의 기본 개념부터 시작합니다.', '인증·인가와 SQL 입력 처리를 익힙니다.', '안전한 출력과 서비스 보안 검증을 연결합니다.', '위협 모델링과 거래 승인 흐름을 설계합니다.'];
+  Array.from(courses.children).forEach((card, index) => { card.hidden = level !== 'all' && lessons[index].level !== Number(level); });
+  document.querySelectorAll('#level-filters button').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.level === level)));
+  document.querySelector('#level-description').textContent = level === 'all' ? '기초 개념부터 보안 설계까지, 원하는 수준을 선택하세요.' : `${levelNames[Number(level)]} · ${descriptions[Number(level)]}`;
+}
+document.querySelectorAll('#level-filters button').forEach(button => button.addEventListener('click', () => {
+  filterCourses(button.dataset.level);
+  history.replaceState(null, '', button.dataset.level === 'all' ? '#curriculum' : `#level-${button.dataset.level}`);
+}));
+function openLevel() {
+  const match = /^#level-([0-3])$/.exec(location.hash);
+  if (!match) return;
+  filterCourses(match[1]);
+  document.querySelector('#curriculum').scrollIntoView({ block: 'start' });
+}
+window.addEventListener('hashchange', openLevel);
+openLevel();

@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // This collection stores learning recommendations, never authorization roles.
+    match /hackerAssessments/{uid} {
+      function owner() {
+        return request.auth != null && request.auth.uid == uid;
+      }
+      function choice(value) {
+        return value is int && value >= 0 && value <= 3;
+      }
+      function validResult() {
+        let d = request.resource.data;
+        return d.keys().hasAll(['version', 'answers', 'updatedAt'])
+          && d.keys().hasOnly(['version', 'answers', 'updatedAt'])
+          && d.version is int && d.version == 1
+          && d.updatedAt is timestamp && d.updatedAt == request.time
+          && d.answers is list && d.answers.size() == 12
+          && choice(d.answers[0]) && choice(d.answers[1])
+          && choice(d.answers[2]) && choice(d.answers[3])
+          && choice(d.answers[4]) && choice(d.answers[5])
+          && choice(d.answers[6]) && choice(d.answers[7])
+          && choice(d.answers[8]) && choice(d.answers[9])
+          && choice(d.answers[10]) && choice(d.answers[11]);
+      }
+      allow get: if owner();
+      allow list: if false;
+      allow create, update: if owner() && validResult();
+      allow delete: if owner();
+    }
+    // Other paths are denied unless explicitly permitted by another project rule.
+  }
+}
