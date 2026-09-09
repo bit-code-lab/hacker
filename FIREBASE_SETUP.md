@@ -2,11 +2,13 @@
 
 프로젝트: `bit-code-lab-2026` · 사이트: https://bit-code-lab.github.io/hacker/
 
+이 안내는 **Kali Linux 데스크톱의 Firefox** 기준입니다. Firebase Console과 보안 규칙은 운영체제와 무관한 서버 설정입니다. 규칙 코드를 칼리 터미널에 실행하지 말고 Console의 Rules 편집기에 입력하세요.
+
 ## 1. Google 로그인
 
 1. Firebase Console → Authentication → Sign-in method에서 Google을 활성화하고 지원 이메일을 지정합니다.
 2. Authentication → Settings → Authorized domains에 `bit-code-lab.github.io`를 추가합니다. 프로토콜과 `/hacker/` 경로는 넣지 않습니다.
-3. 공개 사이트에서 Google 로그인과 로그아웃을 확인합니다. 내장 브라우저에서 Google 로그인이 제한되면 일반 Chrome 또는 Edge에서 사이트를 여세요.
+3. 공개 사이트에서 Google 로그인과 로그아웃을 확인합니다. 칼리 Firefox에서 공개 사이트를 열고 팝업 차단 메시지가 나오면 해당 사이트의 로그인 팝업을 허용한 뒤 다시 시도하세요.
 
 이 사이트는 Firebase Authentication의 Google 로그인을 사용합니다. 제공된 `initializeApp`과 `getAnalytics`만으로는 로그인이 구현되지 않습니다. Analytics는 로그인에 필요하지 않아 사용하지 않습니다. Firebase 웹 API 키는 클라이언트 설정값이며, Firestore 접근 권한은 아래 서버 규칙으로 제어합니다.
 
@@ -49,8 +51,8 @@ Storage는 사용하지 않습니다. 새 전용 Storage 버킷이라면 모든 
 
 ## 5. 배포 후 확인
 
-1. 계정 A 로그인 → 12문항 → 결과 저장 → 새로고침 후 결과 복원.
-2. 로그아웃 → 결과 숨김 → 계정 B 로그인 시 A의 기록이 표시되지 않음.
+1. 칼리 Firefox 일반 창에서 계정 A 로그인 → 12문항 → 결과 저장 → 새로고침 후 결과 복원.
+2. 칼리 Firefox에서 로그아웃 → 결과 숨김 → 계정 B 로그인 시 A의 기록이 표시되지 않음.
 3. Rules Playground 또는 Emulator에서 비로그인·타인 UID 접근, 잘못된 길이·형식·추가 필드·과거 시각 쓰기 거부 확인.
 4. 본인 UID의 정상 문서는 읽기·쓰기 허용 확인.
 
