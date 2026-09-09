@@ -184,12 +184,17 @@
         if (data?.version === assessmentVersion && isValidAnswers(data.answers)) {
           showResult(data.answers);
           saveStatus.textContent = '계정에 저장된 최근 진단 결과입니다.';
-        } else { startAssessment(); }
+        } else {
+          $('#start-assessment').hidden = false;
+          $('#start-assessment').disabled = false;
+          status.textContent = '로그인되었습니다. 수준 진단 시작 버튼을 눌러 주세요.';
+        }
       } catch (error) {
         if (generation !== epoch) return;
         status.textContent = `이전 기록을 확인하지 못했습니다. ${message(error)} 새 진단은 진행할 수 있습니다.`;
         $('#retry-load').hidden = false;
         $('#start-assessment').hidden = false;
+        $('#start-assessment').disabled = false;
       }
     }
     onAuthStateChanged(auth, nextUser => {
@@ -206,13 +211,14 @@
       saveStatus.textContent = '';
       retrySave.hidden = true;
       $('#retry-load').hidden = true;
-      $('#start-assessment').hidden = true;
+      $('#start-assessment').hidden = false;
+      $('#start-assessment').disabled = true;
       $('#retake').disabled = false;
       login.hidden = Boolean(user);
       login.disabled = false;
       logout.hidden = !user;
       $('#account-name').textContent = user ? (user.displayName || '학습자') : '';
-      if (!user) { status.textContent = 'Google 로그인 후 12문항으로 추천 학습 수준을 확인하세요.'; return; }
+      if (!user) { status.textContent = 'Google로 로그인하면 수준 진단 시작 버튼이 활성화됩니다.'; return; }
       void loadResult(user, generation);
     }, error => { status.textContent = message(error); login.disabled = false; });
   } catch (error) {
