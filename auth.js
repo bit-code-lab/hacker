@@ -135,7 +135,7 @@
       const descriptions = ['보안 목표와 웹 통신부터 차근차근 익혀보세요.', '인증·인가와 안전한 데이터 처리를 학습해 보세요.', '출력 문맥과 보안 검증을 연결해 보세요.', '위협 모델링과 거래 승인 설계를 학습해 보세요.'];
       $('#placement-description').textContent = descriptions[result.level];
       const link = $('#recommended-course');
-      link.href = `#level-${result.level}`;
+      link.href = `./courses.html#level-${result.level}`;
       link.textContent = `${levels[result.level]} 과정 보기 →`;
       const review = $('#assessment-review');
       review.replaceChildren();

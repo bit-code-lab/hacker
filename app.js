@@ -131,7 +131,7 @@ function openLesson() {
   if (responses.has(index)) showAnswer(responses.get(index));
   document.querySelector('#source').href = lesson.source;
   const next = document.querySelector('#next');
-  next.href = index === lessons.length - 1 ? '#resources' : `#lesson-${index + 1}`;
+  next.href = index === lessons.length - 1 ? './resources.html' : `#lesson-${index + 1}`;
   next.textContent = index === lessons.length - 1 ? '무료 자료로 계속 배우기 ↗' : '다음 수업 →';
   Array.from(courses.children).forEach((card, n) => card.setAttribute('aria-current', String(n === index)));
   document.title = `${lesson.title} — HACKER`;

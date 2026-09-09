@@ -2,6 +2,8 @@
 
 프로젝트: `bit-code-lab-2026` · 사이트: https://bit-code-lab.github.io/hacker/
 
+로그인·진단 페이지: https://bit-code-lab.github.io/hacker/assessment.html
+
 이 안내는 **Kali Linux 데스크톱의 Firefox** 기준입니다. Firebase Console과 보안 규칙은 운영체제와 무관한 서버 설정입니다. 규칙 코드를 칼리 터미널에 실행하지 말고 Console의 Rules 편집기에 입력하세요.
 
 ## 1. Google 로그인
