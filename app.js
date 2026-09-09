@@ -80,8 +80,74 @@ const kaliGuides = [
   "<h3>칼리에서 모의 거래 흐름 검토하기</h3><p>이 단원은 본인이 구현한 모의 거래 서버가 있다는 전제의 설계·검증 과제입니다. 칼리 Firefox에서 테스트 계정으로 접속하고 Ctrl+Shift+E의 네트워크 도구로 승인 전후 요청과 응답을 관찰하세요. 실제 송금이나 결제는 수행하지 않습니다.</p><p>서버가 없으면 다음 상태 전이를 텍스트 편집기에 적고 각 단계의 검증 조건을 작성합니다. 이를 터미널에서 실행하는 명령으로 해석하지 마세요.</p><pre><code>거래 생성 → 상세 정보 확인 → 승인 검증 → 실행\n데이터 변경 → 기존 승인 무효화 → 다시 승인\n승인 만료 / 이미 사용됨 → 실행 거부</code></pre><p>Firefox의 버튼 표시만 확인하지 말고 서버가 관리하는 승인 상태와 실제 모의 거래 결과를 비교하세요. 칼리 도구나 클라이언트 코드만으로 서버의 올바른 구현을 대신할 수는 없습니다.</p>"
 ];
 lessons.forEach((lesson, index) => { lesson.body = kaliGuides[index] + lesson.body; });
+lessons.push(...[
+  {
+    "title": "세션 수명주기와 CSRF 방어",
+    "tag": "전문 · 웹 보안",
+    "summary": "쿠키 속성, 세션 회전, CSRF 검증의 역할을 나누고 정상·실패 경로를 점검합니다.",
+    "lead": "선수 지식: HTTP, 인증·인가, XSS. 목표: 쿠키 기반 테스트 앱의 세션과 CSRF 검증 계획을 작성합니다.",
+    "body": "<h3>보호 장치를 역할별로 구분하기</h3><p>Secure는 쿠키의 전송 조건, HttpOnly는 스크립트의 쿠키 접근, SameSite는 교차 사이트 전송 조건을 제한합니다. 어느 하나만으로 인증·인가·XSS·CSRF 문제가 모두 해결되지는 않습니다.</p><pre><code>Set-Cookie: __Host-session=EXAMPLE_ONLY; Path=/; Secure; HttpOnly; SameSite=Lax</code></pre><p>위 헤더는 서버 설정 예시이며 터미널 명령이 아닙니다. __Host- 접두사에는 Secure, Path=/, Domain 속성 생략 조건이 있습니다. 실제 서비스에서는 예시 값을 사용하지 않고 검증된 프레임워크가 세션 식별자를 생성하도록 합니다.</p><h3>세션의 시작부터 종료까지</h3><p>로그인이나 권한 상승 시 세션 식별자를 갱신하고, 유휴 시간과 절대 만료 시간을 서버에서 관리합니다. 로그아웃은 화면을 지우는 것에 그치지 않고 서버 측 세션도 무효화해야 합니다.</p><h3>칼리 Firefox에서 점검하기</h3><ol><li>본인 소유의 쿠키 기반 HTTPS 테스트 앱을 준비합니다. Python 정적 서버에는 세션 기능이 없습니다.</li><li>Ctrl+Shift+E로 네트워크 도구를 열고 로그인 응답의 Set-Cookie 속성을 확인합니다. 세션 값 자체는 보고서에 복사하지 않습니다.</li><li>정상적인 상태 변경 요청이 성공하는지 먼저 확인합니다. 앱의 테스트 도구에서 CSRF 토큰 누락·불일치 요청을 보내 거부되는지 확인합니다.</li><li>다른 테스트 세션의 토큰 재사용, 세션 만료 후 요청도 확인합니다. 응답 코드뿐 아니라 원본 데이터가 바뀌지 않았는지 검사합니다.</li></ol><h3>CSRF 정책 선택</h3><p>프레임워크의 검증 기능을 우선 사용하고, 상태 변경 요청에는 세션과 결합된 토큰 검증 등을 적용합니다. Origin 검증이나 SameSite는 환경에 맞게 추가합니다. same-site와 same-origin은 같지 않으며, CORS 설정만으로 CSRF를 해결했다고 판단하면 안 됩니다.</p><div class=\"callout\"><strong>통과 기준</strong><p>정상 요청은 유지되고, 누락·불일치·다른 세션의 토큰은 거부되며, 만료된 세션은 사용할 수 없어야 합니다. 이 사이트의 Firebase 클라이언트 인증을 쿠키 기반 자체 세션 서버와 동일하게 가정하지 마세요.</p></div><p><a href=\"https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html\">세션 관리 공식 자료 ↗</a></p>",
+    "question": "HttpOnly를 적용한 쿠키 기반 앱의 CSRF 대책으로 맞는 것은?",
+    "options": [
+      "HttpOnly만으로 CSRF 검증을 생략한다",
+      "상태 변경 요청의 CSRF 검증을 별도로 설계한다",
+      "CORS 응답 헤더만 추가하면 충분하다"
+    ],
+    "answer": 1,
+    "explanation": "HttpOnly는 스크립트의 쿠키 읽기를 제한합니다. 브라우저의 자동 쿠키 전송에 대한 CSRF 방어는 별도로 필요합니다.",
+    "source": "https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html"
+  },
+  {
+    "title": "API 권한 매트릭스와 회귀 테스트",
+    "tag": "전문 · 검증",
+    "summary": "사용자·조직·자원·행동을 조합해 객체 수준 접근 제어를 검증합니다.",
+    "lead": "선수 지식: 인증·인가, Python 기초. 목표: 허용·거부 정책을 테스트로 표현하고 실제 API 검증 범위를 구분합니다.",
+    "body": "<h3>정책을 명시적으로 정의하기</h3><p>이 실습에서는 같은 조직의 소유자만 문서를 수정할 수 있습니다. 사용자 신원, 조직, 문서 소유권은 서버가 신뢰할 수 있는 정보에서 얻어야 합니다. 요청 본문의 role이나 owner 값을 권한 근거로 쓰지 않습니다.</p><h3>칼리 터미널 실습</h3><p>아래 블록은 Python 표준 라이브러리만 사용하며 네트워크 요청과 파일 변경이 없습니다.</p><pre><code>python3 - &lt;&lt;&#x27;PY&#x27;\nimport unittest\n\n# Educational policy model: identity and ownership are already trusted here.\ndef can_edit(user, document):\n    return (user is not None\n            and user[&quot;tenant&quot;] == document[&quot;tenant&quot;]\n            and user[&quot;id&quot;] == document[&quot;owner&quot;])\n\nclass AuthorizationTests(unittest.TestCase):\n    def test_matrix(self):\n        document = {&quot;tenant&quot;: &quot;school-a&quot;, &quot;owner&quot;: &quot;alice&quot;}\n        cases = [\n            (None, False),\n            ({&quot;id&quot;: &quot;alice&quot;, &quot;tenant&quot;: &quot;school-a&quot;}, True),\n            ({&quot;id&quot;: &quot;bob&quot;, &quot;tenant&quot;: &quot;school-a&quot;}, False),\n            ({&quot;id&quot;: &quot;alice&quot;, &quot;tenant&quot;: &quot;school-b&quot;}, False),\n        ]\n        for user, expected in cases:\n            with self.subTest(user=user):\n                self.assertEqual(can_edit(user, document), expected)\n\nunittest.main(argv=[&quot;authorization-lab&quot;], exit=False)\nPY</code></pre><p>예상 결과는 1개 테스트 메서드 안의 네 가지 조건을 검사한 뒤 OK입니다. 소유자 허용, 비로그인 거부, 같은 조직의 타인 거부, 다른 조직 거부를 확인합니다.</p><h3>단위 테스트에서 실제 API로 확장하기</h3><p>이 코드는 정책 모델을 검사합니다. 실제 서버에서 토큰 검증, 데이터 조회, 라우팅이 올바르게 연결됐다는 증거는 아닙니다. 소유한 테스트 서버에서 같은 조건으로 통합 테스트를 수행하세요.</p><ul><li>목록과 개별 조회, 수정, 삭제 각각에 정책을 적용합니다.</li><li>클라이언트의 객체 ID가 달라져도 서버에서 자원 권한을 검사하는지 확인합니다.</li><li>인증 실패와 권한 부족 응답을 설계대로 구분하고, 응답 본문에서 비공개 데이터가 새지 않는지 확인합니다.</li><li>거부 후 저장 데이터도 유지되는지 검사합니다. 단순한 오류 화면만으로 통과 판정하지 않습니다.</li></ul><div class=\"callout\"><strong>검증 기록</strong><p>테스트 계정, 조직, 자원 소유자, 행동, 예상 허용 여부, 실제 응답, 데이터 변경 여부를 기록합니다. 회귀 테스트는 코드 변경 후에도 같은 정책이 유지되는지 확인하기 위한 것입니다.</p></div>",
+    "question": "권한 함수의 단위 테스트가 통과한 뒤 추가로 필요한 검증은?",
+    "options": [
+      "실제 API에서 신원 검증·자원 조회·권한 검사가 연결되는 통합 테스트",
+      "관리자 버튼 색상 확인",
+      "추가 검증 없이 안전하다고 결론"
+    ],
+    "answer": 0,
+    "explanation": "정책 모델이 올바른 것과 실제 요청 처리 경로에서 그 정책을 강제하는 것은 별개입니다.",
+    "source": "https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html"
+  },
+  {
+    "title": "SSRF와 서버 송신 경계",
+    "tag": "전문 · 아키텍처",
+    "summary": "URL 검증, DNS, 리다이렉트, 네트워크 송신 제한을 함께 검토합니다.",
+    "lead": "선수 지식: HTTP, 신뢰 경계. 목표: 외부 URL을 가져오는 서버 기능의 방어 계층과 검증 한계를 설명합니다.",
+    "body": "<h3>서버가 요청을 대신 보낼 때</h3><p>이미지 가져오기처럼 사용자가 지정한 주소로 서버가 접속하는 기능은 서버의 네트워크 권한을 노출할 수 있습니다. 가능하다면 임의 URL 대신 서비스가 관리하는 자원 ID만 입력받도록 설계합니다.</p><h3>칼리의 오프라인 URL 계약 실습</h3><p>아래 Python 예시는 스킴·정확한 호스트·포트 등 형식 조건만 검사합니다. 문서용 도메인을 사용하며 DNS 조회나 실제 접속은 하지 않습니다.</p><pre><code>python3 - &lt;&lt;&#x27;PY&#x27;\nfrom urllib.parse import urlsplit\n\n# Offline illustration of a narrow URL contract, NOT a full SSRF defense.\ndef allowed_shape(value):\n    try:\n        url = urlsplit(value)\n        return (url.scheme == &quot;https&quot;\n                and url.hostname == &quot;assets.example.com&quot;\n                and url.port in (None, 443)\n                and url.username is None and url.password is None\n                and url.path.startswith(&quot;/public/&quot;)\n                and not url.query and not url.fragment)\n    except ValueError:\n        return False\n\ncases = [\n    (&quot;https://assets.example.com/public/logo.png&quot;, True),\n    (&quot;https://assets.example.com.other.example/public/logo.png&quot;, False),\n    (&quot;http://assets.example.com/public/logo.png&quot;, False),\n    (&quot;https://user@assets.example.com/public/logo.png&quot;, False),\n    (&quot;https://assets.example.com:8443/public/logo.png&quot;, False),\n]\nfor value, expected in cases:\n    result = allowed_shape(value)\n    assert result == expected\n    print(&quot;ALLOW_SHAPE&quot; if result else &quot;REJECT&quot;, value)\nPY</code></pre><p>첫 줄만 ALLOW_SHAPE, 나머지는 REJECT가 예상됩니다. 호스트에 문자열이 포함되는지만 검사하는 방식과 정확한 비교의 차이를 확인합니다.</p><h3>이 예시만 배포하면 안 되는 이유</h3><ul><li>허용된 이름이 내부 주소로 해석될 수 있습니다. 연결할 주소의 IPv4·IPv6 결과와 실제 목적지까지 정책에 맞게 검사해야 합니다.</li><li>검사 시점과 연결 시점 사이에 DNS 응답이 바뀌는 위험을 고려합니다. 문자열 검사만으로 연결 대상이 고정되지 않습니다.</li><li>리다이렉트는 비활성화하거나 각 이동 대상에 동일한 정책을 적용해야 합니다.</li><li>경로의 /public/ 접두사도 경로 정규화·디코딩에 대한 보안 검증을 대신하지 않습니다.</li><li>애플리케이션 밖의 송신 제어로 접근 가능한 목적지를 제한하고, 응답 크기와 시간을 제한합니다.</li></ul><div class=\"callout\"><strong>실제 검증 조건</strong><p>본인 소유의 테스트 서버와 DNS·프록시 환경에서 허용 대상의 정상 요청과 정책 밖 주소·리다이렉트 거부를 모두 확인합니다. 이 로컬 예제의 성공을 SSRF 방어 완료로 표현하지 마세요.</p></div>",
+    "question": "허용 목록의 호스트 문자열 검사만 통과했다면?",
+    "options": [
+      "서버의 모든 송신이 안전하다",
+      "리다이렉트를 무조건 허용해도 된다",
+      "DNS 해석과 실제 연결 대상, 리다이렉트·송신 정책을 추가 검증한다"
+    ],
+    "answer": 2,
+    "explanation": "URL 문자열은 실제 네트워크 목적지와 다를 수 있습니다. 연결 경계까지 방어해야 합니다.",
+    "source": "https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html"
+  },
+  {
+    "title": "보안 로그 분석과 탐지 검증",
+    "tag": "전문 · 방어 운영",
+    "summary": "시간 창과 계정별 이벤트를 묶고 탐지 신호를 오탐 가능성과 함께 해석합니다.",
+    "lead": "선수 지식: Python, 인증 이벤트. 목표: 합성 로그에서 조사 대상을 추리고 탐지와 침해 확정의 차이를 설명합니다.",
+    "body": "<h3>조사에 필요한 사건을 기록하기</h3><p>로그인 성공·실패, 권한 거부 등 중요한 이벤트에 시간, 사건 유형, 결과, 요청 상관관계 식별자를 일관되게 기록합니다. 비밀번호, 원문 세션 쿠키, 액세스 토큰은 남기지 않습니다. 로그 조회 권한과 보존 기간도 제한합니다.</p><h3>칼리 Python으로 합성 이벤트 분석</h3><p>5분 안에 세 번 이상 실패한 계정에서 성공 이벤트가 나타나면 검토 표시를 만드는 연습입니다. 임계값은 수업용이며 운영 환경의 기준이 아닙니다.</p><pre><code>python3 - &lt;&lt;&#x27;PY&#x27;\nfrom collections import defaultdict\nfrom datetime import datetime, timedelta\n\n# Synthetic events only. No real logs or credentials are read.\nevents = [\n    {&quot;at&quot;: &quot;2026-01-01T10:00:00+00:00&quot;, &quot;account&quot;: &quot;demo-a&quot;, &quot;type&quot;: &quot;login_failed&quot;},\n    {&quot;at&quot;: &quot;2026-01-01T10:00:20+00:00&quot;, &quot;account&quot;: &quot;demo-a&quot;, &quot;type&quot;: &quot;login_failed&quot;},\n    {&quot;at&quot;: &quot;2026-01-01T10:00:40+00:00&quot;, &quot;account&quot;: &quot;demo-a&quot;, &quot;type&quot;: &quot;login_failed&quot;},\n    {&quot;at&quot;: &quot;2026-01-01T10:01:00+00:00&quot;, &quot;account&quot;: &quot;demo-a&quot;, &quot;type&quot;: &quot;login_success&quot;},\n    {&quot;at&quot;: &quot;2026-01-01T10:01:10+00:00&quot;, &quot;account&quot;: &quot;demo-b&quot;, &quot;type&quot;: &quot;login_success&quot;},\n]\nfailures = defaultdict(list)\nfor event in sorted(events, key=lambda e: datetime.fromisoformat(e[&quot;at&quot;])):\n    now = datetime.fromisoformat(event[&quot;at&quot;])\n    account = event[&quot;account&quot;]\n    failures[account] = [t for t in failures[account]\n                         if now - t &lt;= timedelta(minutes=5)]\n    if event[&quot;type&quot;] == &quot;login_failed&quot;:\n        failures[account].append(now)\n    elif event[&quot;type&quot;] == &quot;login_success&quot;:\n        if len(failures[account]) &gt;= 3:\n            print(&quot;REVIEW&quot;, account, len(failures[account]))\n        failures[account].clear()\nPY</code></pre><p>예상 출력은 REVIEW demo-a 3입니다. demo-b는 실패 이력이 없어 표시되지 않습니다. 마지막 실패 시각을 09:50:00으로 바꾸면 시간 창 밖으로 빠져 이 예시의 경고가 사라집니다.</p><h3>탐지 결과를 검증하기</h3><ul><li>사용자의 반복 오타나 비밀번호 복구도 같은 패턴을 만들 수 있습니다. 이벤트만으로 계정 탈취를 확정하지 않습니다.</li><li>동일 계정에 대한 요청 ID, 추가 인증 결과, 이후 권한 변경 등 다른 증거를 연결합니다.</li><li>서버 시간 동기화, 시간대, 지연 도착, 중복 이벤트가 결과를 왜곡하는지 확인합니다.</li><li>실패 2회, 3회, 5분 경계, 다른 계정, 순서가 섞인 입력으로 탐지 규칙을 테스트합니다.</li></ul><div class=\"callout\"><strong>운영에서 보완할 점</strong><p>이 예시는 소량의 합성 데이터를 정렬해 메모리에서 처리합니다. 실제 수집기는 입력 스키마 검증, 이벤트 중복 제거, 처리량 제한, 로그 변조 방지와 접근 통제가 필요합니다. 원본 증거와 분석 결과를 구분해 보존하세요.</p></div>",
+    "question": "반복 로그인 실패 후 성공 이벤트가 탐지됐다면 올바른 판단은?",
+    "options": [
+      "오탐 가능성을 고려해 관련 이벤트와 추가 증거를 조사한다",
+      "즉시 계정 탈취로 확정한다",
+      "성공 이벤트이므로 모두 무시한다"
+    ],
+    "answer": 0,
+    "explanation": "탐지는 조사 우선순위를 정하는 신호입니다. 단일 패턴만으로 침해를 확정할 수 없습니다.",
+    "source": "https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html"
+  }
+]);
 const levelNames = ['입문', '초급', '중급', '고급'];
-lessons.forEach((lesson, i) => { lesson.level = Math.floor(i / 2); });
+lessons.forEach((lesson, i) => { lesson.level = i < 8 ? Math.floor(i / 2) : 3; });
 const courses = document.querySelector('#courses');
 lessons.forEach((lesson, index) => {
   const card = document.createElement('a');
@@ -94,9 +160,10 @@ lessons.forEach((lesson, index) => {
 // Lesson HTML is fixed author-written content; user-controlled text is never parsed as HTML.
 const responses = new Map();
 function openLesson() {
-  const match = /^#lesson-([0-7])$/.exec(location.hash);
+  const match = /^#lesson-(0|[1-9][0-9]*)$/.exec(location.hash);
   if (!match) return;
   const index = Number(match[1]);
+  if (!Number.isSafeInteger(index) || index >= lessons.length) return;
   const lesson = lessons[index];
   document.querySelector('#lesson').hidden = false;
   document.querySelector('#lesson-meta').textContent = `CHAPTER ${String(index + 1).padStart(2, '0')} / ${lesson.tag}`;
@@ -142,7 +209,7 @@ window.addEventListener('hashchange', openLesson);
 openLesson();
 
 function filterCourses(level) {
-  const descriptions = ['보안 목표와 HTTP의 기본 개념부터 시작합니다.', '인증·인가와 SQL 입력 처리를 익힙니다.', '안전한 출력과 서비스 보안 검증을 연결합니다.', '위협 모델링과 거래 승인 흐름을 설계합니다.'];
+  const descriptions = ['보안 목표와 HTTP의 기본 개념부터 시작합니다.', '인증·인가와 SQL 입력 처리를 익힙니다.', '안전한 출력과 서비스 보안 검증을 연결합니다.', '위협 모델링·세션·API 검증·SSRF 방어·보안 로그 분석을 학습합니다.'];
   Array.from(courses.children).forEach((card, index) => { card.hidden = level !== 'all' && lessons[index].level !== Number(level); });
   document.querySelectorAll('#level-filters button').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.level === level)));
   document.querySelector('#level-description').textContent = level === 'all' ? '기초 개념부터 보안 설계까지, 원하는 수준을 선택하세요.' : `${levelNames[Number(level)]} · ${descriptions[Number(level)]}`;

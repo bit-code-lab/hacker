@@ -11,7 +11,7 @@
   <script>
     function routeLegacyLink() {
       const hash = location.hash;
-      const target = /^#(?:lesson-[0-7]|level-[0-3]|curriculum|lesson)$/.test(hash) ? 'courses.html' : hash === '#placement' ? 'assessment.html' : hash === '#resources' ? 'resources.html' : null;
+      const target = /^#(?:lesson-(?:[0-9]|1[01])|level-[0-3]|curriculum|lesson)$/.test(hash) ? 'courses.html' : hash === '#placement' ? 'assessment.html' : hash === '#resources' ? 'resources.html' : null;
       if (target) location.replace('./' + target + hash);
     }
     routeLegacyLink();
